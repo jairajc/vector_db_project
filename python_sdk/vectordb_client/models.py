@@ -180,7 +180,7 @@ class MetadataFilter(BaseModel):
     operator: str = Field(
         ...,
         description="Filter operator (eq, ne, gt, gte, lt, lte, in, not_in, contains)",
-        regex="^(eq|ne|gt|gte|lt|lte|in|not_in|contains)$",
+        pattern="^(eq|ne|gt|gte|lt|lte|in|not_in|contains)$",
     )
     value: Union[str, int, float, bool, List[Union[str, int, float, bool]]] = Field(
         ..., description="Filter value"
@@ -195,7 +195,7 @@ class SearchRequest(BaseModel):
     similarity_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
     include_metadata: bool = Field(default=True)
     metadata_filters: Optional[List[MetadataFilter]] = None
-    filter_mode: str = Field(default="and", regex="^(and|or)$")
+    filter_mode: str = Field(default="and", pattern="^(and|or)$")
 
 
 class SearchResult(BaseModel):

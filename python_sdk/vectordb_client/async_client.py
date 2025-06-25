@@ -76,29 +76,18 @@ class AsyncVectorDBClient:
         self.timeout = timeout
         self.max_retries = max_retries
         self.retry_delay = retry_delay
+        self.max_connections = max_connections
+        self.verify_ssl = verify_ssl
 
-    # Session configuration
-        connector = aiohttp.TCPConnector(
-            limit=max_connections,
-            limit_per_host=max_connections // 4,
-            verify_ssl=verify_ssl,
-            keepalive_timeout=60,
-        )
-
-        timeout_config = aiohttp.ClientTimeout(total=timeout)
-
-    # Default headers
-        headers = {
+    # Store session configuration for lazy initialization
+        self._session = None
+        self._headers = {
             "Content-Type": "application/json",
             "User-Agent": "VectorDB-Python-SDK/1.0.0",
         }
 
         if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-
-        self._session = aiohttp.ClientSession(
-            connector=connector, timeout=timeout_config, headers=headers
-        )
+            self._headers["Authorization"] = f"Bearer {api_key}"
 
         logger.info(f"AsyncVectorDBClient initialized for {base_url}")
 
@@ -109,6 +98,25 @@ class AsyncVectorDBClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
         await self.close()
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """Get or create the aiohttp session"""
+        if self._session is None or self._session.closed:
+        # Session configuration
+            connector = aiohttp.TCPConnector(
+                limit=self.max_connections,
+                limit_per_host=self.max_connections // 4,
+                verify_ssl=self.verify_ssl,
+                keepalive_timeout=60,
+            )
+
+            timeout_config = aiohttp.ClientTimeout(total=self.timeout)
+
+            self._session = aiohttp.ClientSession(
+                connector=connector, timeout=timeout_config, headers=self._headers
+            )
+
+        return self._session
 
     async def close(self):
         """Close the client session"""
@@ -139,7 +147,8 @@ class AsyncVectorDBClient:
 
         for attempt in range(self.max_retries + 1):
             try:
-                async with self._session.request(
+                session = await self._get_session()
+                async with session.request(
                     method=method, url=url, json=json_data, params=params, **kwargs
                 ) as response:
 
@@ -255,7 +264,7 @@ class AsyncVectorDBClient:
         self, skip: int = 0, limit: int = 20, search: Optional[str] = None
     ) -> LibraryList:
         """List libraries with pagination and search"""
-        params = {"skip": skip, "limit": limit}
+        params: Dict[str, Any] = {"skip": skip, "limit": limit}
         if search:
             params["search"] = search
 
@@ -304,7 +313,7 @@ class AsyncVectorDBClient:
         search: Optional[str] = None,
     ) -> DocumentList:
         """List documents in a library"""
-        params = {"skip": skip, "limit": limit}
+        params: Dict[str, Any] = {"skip": skip, "limit": limit}
         if search:
             params["search"] = search
 
@@ -349,7 +358,7 @@ class AsyncVectorDBClient:
         document_id: Optional[str] = None,
     ) -> ChunkList:
         """List chunks in a library"""
-        params = {"skip": skip, "limit": limit}
+        params: Dict[str, Any] = {"skip": skip, "limit": limit}
         if document_id:
             params["document_id"] = document_id
 
