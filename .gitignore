@@ -282,6 +282,8 @@ vector_store/
 *.pkl
 *.pickle
 models/
+# But allow our app models (Python code, not ML models)
+!app/models/
 
 # API keys and secrets
 .secrets
