@@ -7,6 +7,7 @@ from urllib.parse import urljoin, urlencode
 import aiohttp
 import time
 import logging
+from http import HTTPStatus
 
 from .models import (
     Library,
@@ -145,7 +146,7 @@ class AsyncVectorDBClient:
                     response_text = await response.text()
 
                 # Handle successful responses
-                    if 200 <= response.status < 300:
+                    if HTTPStatus.OK.value <= response.status < HTTPStatus.MULTIPLE_CHOICES.value:
                         if response_text:
                             try:
                                 return json.loads(response_text)
@@ -154,7 +155,7 @@ class AsyncVectorDBClient:
                         return {}
 
                 # Handle rate limiting with retry
-                    if response.status == 429 and attempt < self.max_retries:
+                    if response.status == HTTPStatus.TOO_MANY_REQUESTS.value and attempt < self.max_retries:
                         retry_after = response.headers.get("Retry-After")
                         delay = (
                             float(retry_after)
@@ -166,7 +167,7 @@ class AsyncVectorDBClient:
                         continue
 
                 # Handle server errors with retry
-                    if response.status >= 500 and attempt < self.max_retries:
+                    if response.status >= HTTPStatus.INTERNAL_SERVER_ERROR.value and attempt < self.max_retries:
                         delay = self.retry_delay * (2**attempt)
                         logger.warning(
                             f"Server error {response.status}, retrying after {delay}s"

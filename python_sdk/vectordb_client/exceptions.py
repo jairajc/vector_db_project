@@ -1,7 +1,8 @@
 """Custom exceptions for VectorDB SDK"""
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import json
+from http import HTTPStatus
 
 
 class VectorDBError(Exception):
@@ -50,14 +51,14 @@ class AuthenticationError(VectorDBError):
     """Raised when authentication fails"""
 
     def __init__(self, message: str = "Authentication failed"):
-        super().__init__(message, status_code=401)
+        super().__init__(message, status_code=HTTPStatus.UNAUTHORIZED.value)
 
 
 class AuthorizationError(VectorDBError):
     """Raised when authorization fails"""
 
     def __init__(self, message: str = "Access denied"):
-        super().__init__(message, status_code=403)
+        super().__init__(message, status_code=HTTPStatus.FORBIDDEN.value)
 
 
 class LibraryNotFoundError(VectorDBError):
@@ -67,7 +68,7 @@ class LibraryNotFoundError(VectorDBError):
         super().__init__(
             f"Library with ID '{library_id}' not found",
             details={"library_id": library_id},
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND.value,
         )
 
 
@@ -82,7 +83,7 @@ class DocumentNotFoundError(VectorDBError):
             message += f" in library '{library_id}'"
             details["library_id"] = library_id
 
-        super().__init__(message, details, status_code=404)
+        super().__init__(message, details, status_code=HTTPStatus.NOT_FOUND.value)
 
 
 class ChunkNotFoundError(VectorDBError):
@@ -96,7 +97,7 @@ class ChunkNotFoundError(VectorDBError):
             message += f" in library '{library_id}'"
             details["library_id"] = library_id
 
-        super().__init__(message, details, status_code=404)
+        super().__init__(message, details, status_code=HTTPStatus.NOT_FOUND.value)
 
 
 class ValidationError(VectorDBError):
@@ -117,7 +118,7 @@ class ValidationError(VectorDBError):
         if errors:
             details["validation_errors"] = errors
 
-        super().__init__(message, details, status_code=422)
+        super().__init__(message, details, status_code=HTTPStatus.UNPROCESSABLE_ENTITY.value)
 
 
 class RateLimitError(VectorDBError):
@@ -130,7 +131,7 @@ class RateLimitError(VectorDBError):
         if retry_after:
             details["retry_after_seconds"] = retry_after
 
-        super().__init__(message, details, status_code=429)
+        super().__init__(message, details, status_code=HTTPStatus.TOO_MANY_REQUESTS.value)
 
 
 class ServerError(VectorDBError):
@@ -139,7 +140,7 @@ class ServerError(VectorDBError):
     def __init__(
         self,
         message: str = "Internal server error",
-        status_code: int = 500,
+        status_code: int = HTTPStatus.INTERNAL_SERVER_ERROR.value,
         response_text: Optional[str] = None,
     ):
         super().__init__(message, status_code=status_code, response_text=response_text)
@@ -186,16 +187,16 @@ class EmbeddingError(VectorDBError):
 
 # HTTP status code to exception mapping
 STATUS_CODE_EXCEPTIONS = {
-    400: ValidationError,
-    401: AuthenticationError,
-    403: AuthorizationError,
-    404: VectorDBError,  # Will be specialized based on context
-    422: ValidationError,
-    429: RateLimitError,
-    500: ServerError,
-    502: ServerError,
-    503: ServerError,
-    504: TimeoutError,
+    HTTPStatus.BAD_REQUEST.value: ValidationError,
+    HTTPStatus.UNAUTHORIZED.value: AuthenticationError,
+    HTTPStatus.FORBIDDEN.value: AuthorizationError,
+    HTTPStatus.NOT_FOUND.value: VectorDBError,  # Will be specialized based on context
+    HTTPStatus.UNPROCESSABLE_ENTITY.value: ValidationError,
+    HTTPStatus.TOO_MANY_REQUESTS.value: RateLimitError,
+    HTTPStatus.INTERNAL_SERVER_ERROR.value: ServerError,
+    HTTPStatus.BAD_GATEWAY.value: ServerError,
+    HTTPStatus.SERVICE_UNAVAILABLE.value: ServerError,
+    HTTPStatus.GATEWAY_TIMEOUT.value: TimeoutError,
 }
 
 
@@ -226,8 +227,8 @@ def create_exception_from_response(
     if request_context:
         details.update(request_context)
 
-# Handle specific 404 cases
-    if status_code == 404:
+# Handle specific NOT_FOUND cases
+    if status_code == HTTPStatus.NOT_FOUND.value:
         if request_context:
             path = request_context.get("path", "")
             if "/libraries/" in path:
