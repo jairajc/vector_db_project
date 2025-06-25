@@ -207,6 +207,210 @@ results = await client.search_multiple_libraries(
 
 VectorDB follows a layered architecture with clear separation of concerns:
 
+```mermaid
+graph TB
+    %% External Layer
+    Client["`**External Clients**
+    Python SDK
+    HTTP Clients
+    Web Apps`"]
+    
+    %% API Gateway Layer
+    FastAPI["`**FastAPI Application**
+    main.py
+    CORS Middleware
+    Exception Handlers
+    Health Endpoints`"]
+    
+    %% API Router Layer
+    subgraph APIRouters["`**API Layer (v1)**`"]
+        LibAPI["`**Libraries API**
+        /api/v1/libraries
+        CRUD Operations`"]
+        DocAPI["`**Documents API**
+        /api/v1/documents
+        Document Management`"]
+        ChunkAPI["`**Chunks API**
+        /api/v1/chunks
+        Chunk Operations`"]
+        SearchAPI["`**Search API**
+        /api/v1/search
+        Vector Search`"]
+    end
+    
+    %% Service Layer
+    subgraph ServiceLayer["`**Service Layer**`"]
+        LibService["`**Library Service**
+        Business Logic
+        Validation
+        Orchestration`"]
+        DocService["`**Document Service**
+        Document Processing
+        Chunking Logic`"]
+        ChunkService["`**Chunk Service**
+        Embedding Generation
+        Indexing Management`"]
+        IndexService["`**Index Service**
+        Vector Operations
+        Index Management`"]
+    end
+    
+    %% Repository Layer
+    subgraph RepoLayer["`**Repository Layer**`"]
+        RepoFactory["`**Repository Factory**
+        Abstract Interface`"]
+        MemoryRepo["`**Memory Repository**
+        In-Memory Storage
+        Fast Access`"]
+        FileRepo["`**File Repository**
+        JSON File Storage
+        Persistent Data`"]
+    end
+    
+    %% Index Layer
+    subgraph IndexLayer["`**Indexing Algorithms**`"]
+        LinearIndex["`**Linear Index**
+        Brute Force Search
+        High Accuracy`"]
+        KDTreeIndex["`**KD-Tree Index**
+        Space Partitioning
+        Fast NN Search`"]
+        LSHIndex["`**LSH Index**
+        Locality Sensitive
+        Approximate Search`"]
+        BaseIndex["`**Base Index**
+        Abstract Interface`"]
+    end
+    
+    %% Model Layer
+    subgraph ModelLayer["`**Data Models**`"]
+        LibModel["`**Library Models**
+        Pydantic Schemas
+        Validation`"]
+        DocModel["`**Document Models**
+        Data Structures`"]
+        ChunkModel["`**Chunk Models**
+        Vector Embeddings`"]
+    end
+    
+    %% Core Infrastructure
+    subgraph CoreLayer["`**Core Infrastructure**`"]
+        Config["`**Configuration**
+        Settings Management
+        Environment Variables`"]
+        Container["`**DI Container**
+        Dependency Injection
+        Service Resolution`"]
+        Exceptions["`**Exception Handling**
+        Custom Exceptions
+        Error Management`"]
+        Constants["`**Constants**
+        Enums & Types
+        Index Types`"]
+    end
+    
+    %% Utilities
+    subgraph UtilsLayer["`**Utilities**`"]
+        Embeddings["`**Embeddings**
+        Vector Generation
+        Text Processing`"]
+        Concurrency["`**Concurrency**
+        Async Operations
+        Thread Management`"]
+        Filters["`**Metadata Filters**
+        Query Filtering
+        Search Enhancement`"]
+    end
+    
+    %% Storage
+    subgraph StorageLayer["`**Storage Layer**`"]
+        MemStorage["`**Memory Storage**
+        RAM-based
+        Fast Access`"]
+        FileStorage["`**File Storage**
+        JSON Files
+        Persistent`"]
+        DataDir["`**Data Directory**
+        /data folder
+        File Organization`"]
+    end
+    
+    %% Python SDK
+    subgraph PythonSDK["`**Python SDK**`"]
+        SyncClient["`**Sync Client**
+        Synchronous API
+        Thread Management`"]
+        AsyncClient["`**Async Client**
+        Asynchronous API
+        HTTP Requests`"]
+        SDKModels["`**SDK Models**
+        Client-side Models
+        Request/Response`"]
+    end
+    
+    %% Connections
+    Client --> PythonSDK
+    Client --> FastAPI
+    PythonSDK --> FastAPI
+    
+    FastAPI --> APIRouters
+    
+    LibAPI --> LibService
+    DocAPI --> DocService
+    ChunkAPI --> ChunkService
+    SearchAPI --> IndexService
+    
+    LibService --> RepoLayer
+    DocService --> RepoLayer
+    ChunkService --> RepoLayer
+    ChunkService --> IndexService
+    IndexService --> IndexLayer
+    
+    RepoFactory --> MemoryRepo
+    RepoFactory --> FileRepo
+    
+    MemoryRepo --> MemStorage
+    FileRepo --> FileStorage
+    FileStorage --> DataDir
+    
+    BaseIndex --> LinearIndex
+    BaseIndex --> KDTreeIndex
+    BaseIndex --> LSHIndex
+    
+    ServiceLayer --> ModelLayer
+    APIRouters --> ModelLayer
+    
+    ServiceLayer --> UtilsLayer
+    IndexService --> UtilsLayer
+    
+    Container --> ServiceLayer
+    Container --> RepoLayer
+    Config --> Container
+    
+    SyncClient --> AsyncClient
+    AsyncClient --> FastAPI
+    
+    %% Styling
+    classDef apiLayer fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef serviceLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef repoLayer fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef indexLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef coreLayer fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef utilsLayer fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    classDef storageLayer fill:#fffde7,stroke:#f57f17,stroke-width:2px
+    classDef sdkLayer fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px
+    
+    class APIRouters,FastAPI apiLayer
+    class ServiceLayer serviceLayer
+    class RepoLayer repoLayer
+    class IndexLayer indexLayer
+    class CoreLayer coreLayer
+    class UtilsLayer utilsLayer
+    class StorageLayer storageLayer
+    class PythonSDK sdkLayer
+```
+
+
 **Components:**
 - **Client Layer**: Python SDK, REST clients
 - **API Gateway**: FastAPI with validation and exception handling  
