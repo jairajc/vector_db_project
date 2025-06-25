@@ -11,7 +11,7 @@ from datetime import datetime
 
 class ChunkService:
     def __init__(self, chunk_repo, library_repo, index_service):
-        # Use dependency injection - no fallback to factory
+    # Use dependency injection - no fallback to factory
         self.chunk_repo = chunk_repo
         self.library_repo = library_repo
         self.index_service = index_service
@@ -39,13 +39,13 @@ class ChunkService:
         """Create a new chunk in a library"""
         await self._verify_library_exists(library_id)
 
-        # Generate embedding for the text
+    # Generate embedding for the text
         embedding = await embedding_service.generate_embedding(chunk_create.text)
 
-        # Create metadata if not provided
+    # Create metadata if not provided
         metadata = chunk_create.metadata or ChunkMetadata()
 
-        # Create chunk
+    # Create chunk
         chunk = Chunk(
             id="",  # Will be set by repository
             text=chunk_create.text,
@@ -55,10 +55,10 @@ class ChunkService:
             library_id=library_id,
         )
 
-        # Save chunk to repository
+    # Save chunk to repository
         saved_chunk = await self.chunk_repo.create(chunk)
 
-        # Add to vector index
+    # Add to vector index
         index_metadata = {
             "text": saved_chunk.text,
             "document_id": saved_chunk.document_id,
@@ -117,7 +117,7 @@ class ChunkService:
             library_id, chunk_id
         )
 
-        # Prepare updates
+    # Prepare updates
         updates = {}
         regenerate_embedding = False
 
@@ -131,19 +131,19 @@ class ChunkService:
         if chunk_update.document_id is not None:
             updates["document_id"] = chunk_update.document_id
 
-        # Generate new embedding if text changed
+    # Generate new embedding if text changed
         if regenerate_embedding and chunk_update.text:
             new_embedding = await embedding_service.generate_embedding(
                 chunk_update.text
             )
             updates["embedding"] = new_embedding
 
-        # Update chunk in repository
+    # Update chunk in repository
         updated_chunk = await self.chunk_repo.update(chunk_id, updates)
         if not updated_chunk:
             raise ChunkNotFound(chunk_id, library_id)
 
-        # Update vector index if embedding changed
+    # Update vector index if embedding changed
         if regenerate_embedding:
             index_metadata = {
                 "text": updated_chunk.text,
@@ -178,8 +178,8 @@ class ChunkService:
         await self._verify_library_exists(library_id)
         await self._verify_chunk_exists_in_library(library_id, chunk_id)
 
-        # Remove from vector index
+    # Remove from vector index
         await self.index_service.remove_vector(library_id, chunk_id)
 
-        # Delete from repository
+    # Delete from repository
         return await self.chunk_repo.delete(chunk_id)

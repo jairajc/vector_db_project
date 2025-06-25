@@ -23,7 +23,7 @@ class Container:
 
     def _initialize_repositories(self):
         """Initialize repository instances based on configuration"""
-        # Early return if already initialized
+    # Early return if already initialized
         if self._initialized:
             return
 
@@ -61,7 +61,7 @@ class Container:
 
     def get_library_service(self):
         """Get the singleton library service instance"""
-        # Early return if already exists
+    # Early return if already exists
         if "library_service" in self._instances:
             return self._instances["library_service"]
 
@@ -77,7 +77,6 @@ class Container:
 
     def get_chunk_service(self):
         """Get the singleton chunk service instance"""
-        # Early return if already exists
         if "chunk_service" in self._instances:
             return self._instances["chunk_service"]
 
@@ -92,7 +91,6 @@ class Container:
 
     def get_document_service(self):
         """Get the singleton document service instance"""
-        # Early return if already exists
         if "document_service" in self._instances:
             return self._instances["document_service"]
 
@@ -107,7 +105,6 @@ class Container:
 
     def get_index_service(self):
         """Get the singleton index service instance"""
-        # Early return if already exists
         if "index_service" in self._instances:
             return self._instances["index_service"]
 
@@ -117,5 +114,5 @@ class Container:
         return self._instances["index_service"]
 
 
-# Global container instance - initialize at module import time
+# Global container instance 
 container = Container()

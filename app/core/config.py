@@ -5,7 +5,6 @@ import os
 
 
 class Settings:
-    """Application settings loaded from environment variables"""
 
     def __init__(self):
         # Application Configuration

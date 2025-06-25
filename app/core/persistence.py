@@ -49,7 +49,7 @@ class PersistenceManager:
         self.checkpoint_path = self.base_path / "checkpoints"
         self.metadata_path = self.base_path / "metadata"
 
-        # Ensure directories exist
+    # Ensure directories exist
         for path in [
             self.base_path,
             self.wal_path,
@@ -58,13 +58,13 @@ class PersistenceManager:
         ]:
             path.mkdir(parents=True, exist_ok=True)
 
-        # Internal state
+    # Internal state
         self._wal_sequence = 0
         self._last_checkpoint_time = None
         self._background_tasks: List[asyncio.Task] = []
         self._shutdown = False
 
-        # Configuration
+    # Configuration
         self.wal_sync_interval = 5.0  # seconds
         self.checkpoint_interval = 300.0  # 5 minutes
         self.max_wal_size = 100 * 1024 * 1024  # 100MB
@@ -74,10 +74,10 @@ class PersistenceManager:
     async def initialize(self):
         """Initialize persistence manager and start background tasks"""
         try:
-            # Load existing WAL sequence
+        # Load existing WAL sequence
             await self._load_wal_state()
 
-            # Start background tasks
+        # Start background tasks
             self._background_tasks = [
                 asyncio.create_task(self._wal_sync_worker()),
                 asyncio.create_task(self._checkpoint_worker()),
@@ -94,14 +94,14 @@ class PersistenceManager:
         """Gracefully shutdown persistence manager"""
         self._shutdown = True
 
-        # Cancel background tasks
+    # Cancel background tasks
         for task in self._background_tasks:
             task.cancel()
 
-        # Wait for tasks to complete
+    # Wait for tasks to complete
         await asyncio.gather(*self._background_tasks, return_exceptions=True)
 
-        # Final WAL sync
+    # Final WAL sync
         await self._sync_wal()
 
         logger.info("PersistenceManager shutdown complete")
@@ -160,8 +160,8 @@ class PersistenceManager:
 
     async def _sync_wal(self):
         """Synchronize WAL to disk"""
-        # In a real implementation, we'd batch and sync WAL entries
-        # Placeholder for more complex WAL logic
+    # In a real implementation, we'd batch and sync WAL entries
+    # Placeholder for more complex WAL logic
         pass
 
     # Checkpoint Operations
@@ -193,16 +193,16 @@ class PersistenceManager:
 
             checkpoint_file = self.checkpoint_path / f"{checkpoint_id}.pkl"
 
-            # Write checkpoint atomically
+        # Write checkpoint atomically
             temp_file = checkpoint_file.with_suffix(".tmp")
             async with aiofiles.open(temp_file, "wb") as f:
                 await f.write(pickle.dumps(checkpoint_data))
                 await f.fsync()
 
-            # Atomic rename
+        # Atomic rename
             temp_file.rename(checkpoint_file)
 
-            # Save metadata
+        # Save metadata
             metadata = CheckpointMetadata(
                 checkpoint_id=checkpoint_id,
                 timestamp=datetime.now(timezone.utc),
@@ -250,9 +250,9 @@ class PersistenceManager:
             try:
                 await asyncio.sleep(self.checkpoint_interval)
 
-                # Check if checkpoint is needed
+            # Check if checkpoint is needed
                 if self._should_create_checkpoint():
-                    # This would need to be called with actual data
+                # This would need to be called with actual data
                     logger.info("Checkpoint worker triggered (implementation needed)")
 
             except asyncio.CancelledError:
@@ -268,18 +268,18 @@ class PersistenceManager:
         time_since_last = datetime.now(timezone.utc) - self._last_checkpoint_time
         return time_since_last.total_seconds() > self.checkpoint_interval
 
-    # Recovery Operations
+# Recovery Operations
 
     async def recover_from_checkpoint(self) -> Optional[Dict[str, Any]]:
         """Recover database state from the latest checkpoint and replay WAL"""
         try:
-            # Load latest checkpoint
+        # Load latest checkpoint
             checkpoint_data = await self.load_latest_checkpoint()
             if not checkpoint_data:
                 logger.info("No checkpoint found, starting fresh")
                 return None
 
-            # Replay WAL entries since checkpoint
+        # Replay WAL entries since checkpoint
             checkpoint_timestamp = datetime.fromisoformat(
                 checkpoint_data["metadata"]["timestamp"]
             )
@@ -305,14 +305,14 @@ class PersistenceManager:
 
                 entry_time = datetime.fromisoformat(wal_entry["timestamp"])
                 if entry_time > since_time:
-                    # Apply WAL operation (implementation needed)
+                # Apply WAL operation (implementation needed)
                     logger.debug(f"Replaying WAL operation: {wal_entry['operation']}")
 
         except Exception as e:
             logger.error(f"WAL replay failed: {e}")
             raise PersistenceError(f"WAL replay failed: {e}")
 
-    # Compaction Operations
+# Compaction Operations
 
     async def _compaction_worker(self):
         """Background worker for WAL compaction"""
@@ -330,7 +330,7 @@ class PersistenceManager:
         try:
             wal_files = sorted(self.wal_path.glob("wal_*.log"))
 
-            # Keep only recent WAL files (last 1000 operations)
+        # Keep only recent WAL files (last 1000 operations)
             if len(wal_files) > 1000:
                 files_to_remove = wal_files[:-1000]
                 for wal_file in files_to_remove:
@@ -341,7 +341,7 @@ class PersistenceManager:
         except Exception as e:
             logger.error(f"WAL compaction failed: {e}")
 
-    # Serialization Helpers
+# Serialization Helpers
 
     def _serialize_libraries(self, libraries: Dict[str, Any]) -> Dict[str, Any]:
         """Serialize libraries for checkpointing"""
@@ -384,7 +384,7 @@ class PersistenceManager:
                     "metadata": {},
                 }
 
-                # Serialize vectors and metadata if available
+            # Serialize vectors and metadata if available
                 if hasattr(index, "_vectors"):
                     index_data["vectors"] = {
                         vector_id: (
@@ -396,7 +396,7 @@ class PersistenceManager:
                 if hasattr(index, "_metadata"):
                     index_data["metadata"] = dict(index._metadata)
 
-                # Add index-specific parameters
+            # Add index-specific parameters
                 if hasattr(index, "lsh_params"):
                     index_data["lsh_params"] = asdict(index.lsh_params)
 
@@ -418,7 +418,7 @@ class PersistenceManager:
         except Exception as e:
             logger.error(f"Failed to save checkpoint metadata: {e}")
 
-    # Context Managers
+# Context Managers
 
     @asynccontextmanager
     async def transaction(self, operation_name: str):

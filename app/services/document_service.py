@@ -9,7 +9,7 @@ from app.core.exceptions import DocumentNotFound, LibraryNotFound
 
 class DocumentService:
     def __init__(self, document_repo, chunk_repo, library_repo):
-        # Use dependency injection - no fallback to factory
+    # Use dependency injection - no fallback to factory
         self.document_repo = document_repo
         self.chunk_repo = chunk_repo
         self.library_repo = library_repo
@@ -29,12 +29,12 @@ class DocumentService:
         self, library_id: str, document_create: DocumentCreate
     ) -> Document:
         """Create a new document in a library"""
-        # Verify library exists
+    # Verify library exists
         library = await self.library_repo.get_by_id(library_id)
         if not library:
             raise LibraryNotFound(library_id)
 
-        # Create document
+    # Create document
         document = await self.document_repo.create_from_request(
             document_create, library_id=library_id
         )
@@ -45,7 +45,7 @@ class DocumentService:
         """Get a document by ID"""
         document = await self._get_document_or_raise(document_id)
 
-        # Update chunk count
+    # Update chunk count
         await self._update_document_chunk_count(document)
         return document
 
@@ -53,7 +53,7 @@ class DocumentService:
         self, library_id: str, skip: int = 0, limit: int = 100
     ) -> List[Document]:
         """List all documents in a library with pagination"""
-        # Verify library exists
+    # Verify library exists
         library = await self.library_repo.get_by_id(library_id)
         if not library:
             raise LibraryNotFound(library_id)
@@ -62,7 +62,7 @@ class DocumentService:
             library_id, skip=skip, limit=limit
         )
 
-        # Update chunk counts for each document
+    # Update chunk counts for each document
         for document in documents:
             await self._update_document_chunk_count(document)
 
@@ -88,17 +88,17 @@ class DocumentService:
         """Delete a document and all its chunks"""
         await self._get_document_or_raise(document_id)
 
-        # Delete all chunks in the document
+    # Delete all chunks in the document
         await self.chunk_repo.delete_by_document_id(document_id)
 
-        # Delete the document
+    # Delete the document
         return await self.document_repo.delete(document_id)
 
     async def get_document_chunks(
         self, document_id: str, skip: int = 0, limit: int = 100
     ) -> List[Chunk]:
         """Get all chunks belonging to a document"""
-        # Verify document exists
+    # Verify document exists
         await self.get_document(document_id)
 
         return await self.chunk_repo.get_by_document_id(

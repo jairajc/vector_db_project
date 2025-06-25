@@ -29,8 +29,8 @@ A high-performance, scalable vector database with advanced indexing algorithms, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/vectordb/vectordb-private.git
-cd VDB-Private-1
+git clone https://github.com/jairajc/vector_db_project.git
+cd vector_db_project
 
 # Start with Docker Compose
 docker-compose up --build

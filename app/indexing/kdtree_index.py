@@ -20,17 +20,6 @@ class KDNode:
 
 
 class KDTreeIndex(BaseVectorIndex):
-    """
-    KD-Tree based vector index for approximate nearest neighbor search with async concurrency control
-
-    Time Complexity:
-    - Build: O(n log n) where n is the number of vectors
-    - Search: O(log n) average case, O(n) worst case
-    - Insert: O(log n) average case, O(n) worst case
-    - Delete: O(log n) average case, O(n) worst case
-
-    Space Complexity: O(n) where n is the number of vectors
-    """
 
     def __init__(self, similarity_metric: SimilarityMetric = SimilarityMetric.COSINE):
         super().__init__(similarity_metric)
@@ -58,7 +47,7 @@ class KDTreeIndex(BaseVectorIndex):
         async with await lock_manager.write_lock(resource_id):
             vector_array = np.array(vector, dtype=np.float32)
 
-            # Initialize dimension on first vector
+        # Initialize dimension on first vector
             if self.dimension is None:
                 self.dimension = len(vector_array)
             elif len(vector_array) != self.dimension:
@@ -66,20 +55,20 @@ class KDTreeIndex(BaseVectorIndex):
                     f"Vector dimension {len(vector_array)} doesn't match index dimension {self.dimension}"
                 )
 
-            # Normalize vector if using cosine similarity
+        # Normalize vector if using cosine similarity
             if self.similarity_metric == SimilarityMetric.COSINE:
                 vector_array = self._normalize_vector(vector_array)
 
-            # Store vector
+        # Store vector
             self._vectors[vector_id] = vector_array
             self._metadata[vector_id] = metadata or {}
 
-            # Create new node
+        # Create new node
             new_node = KDNode(
                 vector_id=vector_id, vector=vector_array, metadata=metadata or {}
             )
 
-            # Insert into tree
+        # Insert into tree
             self.root = self._insert_node(self.root, new_node, 0)
 
     async def remove_vector(self, vector_id: str) -> bool:
@@ -90,11 +79,11 @@ class KDTreeIndex(BaseVectorIndex):
             if vector_id not in self._vectors:
                 return False
 
-            # Remove from storage
+        # Remove from storage
             del self._vectors[vector_id]
             del self._metadata[vector_id]
 
-            # Rebuild tree (simple approach for now- could be optimized)
+        # Rebuild tree (simple approach for now- could be optimized)
             await self._rebuild_tree_internal()
 
             return True
@@ -146,15 +135,15 @@ class KDTreeIndex(BaseVectorIndex):
                     f"Query vector dimension {len(query_array)} doesn't match index dimension {self.dimension}"
                 )
 
-            # Normalize query vector if using cosine similarity
+        # Normalize query vector if using cosine similarity
             if self.similarity_metric == SimilarityMetric.COSINE:
                 query_array = self._normalize_vector(query_array)
 
-            # Perform KD-Tree search
+        # Perform KD-Tree search
             best_matches = []
             self._search_kdtree(self.root, query_array, k, best_matches, 0)
 
-            # Sort by similarity score
+        # Sort by similarity score
             best_matches.sort(key=lambda x: x[1], reverse=True)
 
             return best_matches[:k]
@@ -171,15 +160,15 @@ class KDTreeIndex(BaseVectorIndex):
                 f"Query vector dimension {len(query_vector)} doesn't match index dimension {self.dimension}"
             )
 
-        # Same normalizing again
+    # Same normalizing again
         if self.similarity_metric == SimilarityMetric.COSINE:
             query_vector = self._normalize_vector(query_vector)
 
-        # Perform KD-Tree search
+    # Perform KD-Tree search
         best_matches = []
         self._search_kdtree(self.root, query_vector, k, best_matches, 0)
 
-        # Sort by similarity score and add metadata
+    # Sort by similarity score and add metadata
         best_matches.sort(key=lambda x: x[1], reverse=True)
 
         results = []
@@ -235,35 +224,35 @@ class KDTreeIndex(BaseVectorIndex):
         if node is None:
             return
 
-        # Calculate similarity to current node
+    # Calculate similarity to current node
         similarity = self._calculate_similarity(query, node.vector)
 
-        # Update best matches
+    # Update best matches
         if len(best_matches) < k:
             best_matches.append((node.vector_id, similarity))
         else:
-            # Find the worst match
+        # Find the worst match
             worst_idx = min(range(len(best_matches)), key=lambda i: best_matches[i][1])
             if similarity > best_matches[worst_idx][1]:
                 best_matches[worst_idx] = (node.vector_id, similarity)
 
-        # Determine which subtree to search first
+    # Determine which subtree to search first
         axis = depth % (self.dimension or 1)
 
         if query[axis] < node.vector[axis]:
-            # Search left subtree first
+        # Search left subtree first
             self._search_kdtree(node.left, query, k, best_matches, depth + 1)
 
-            # Check if we need to search right subtree
+        # Check if we need to search right subtree
             if len(best_matches) < k or self._should_search_other_side(
                 query, node, best_matches, axis
             ):
                 self._search_kdtree(node.right, query, k, best_matches, depth + 1)
         else:
-            # Search right subtree first
+        # Search right subtree first
             self._search_kdtree(node.right, query, k, best_matches, depth + 1)
 
-            # Check if we need to search left subtree
+        # Check if we need to search left subtree
             if len(best_matches) < k or self._should_search_other_side(
                 query, node, best_matches, axis
             ):
@@ -280,19 +269,19 @@ class KDTreeIndex(BaseVectorIndex):
         if len(best_matches) < 1:
             return True
 
-        # Find current worst match
+    # Find current worst match
         worst_similarity = min(match[1] for match in best_matches)
 
-        # Calculate distance to the splitting plane
+    # Calculate distance to the splitting plane
         plane_distance = abs(query[axis] - node.vector[axis])
 
-        # For simplicity, convert similarity threshold to distance threshold
-        # This is a heuristic and could be improved based on the similarity metric
+    # For simplicity, convert similarity threshold to distance threshold
+    # This is a heuristic and could be improved based on the similarity metric
         if self.similarity_metric == SimilarityMetric.COSINE:
-            # For cosine similarity, use a conservative threshold
+        # For cosine similarity, use a conservative threshold
             distance_threshold = 2.0 * (1.0 - worst_similarity)
         else:
-            # For other metrics, use plane distance directly
+        # For other metrics, use plane distance directly
             distance_threshold = plane_distance
 
         return plane_distance <= distance_threshold
@@ -303,7 +292,7 @@ class KDTreeIndex(BaseVectorIndex):
             self.root = None
             return
 
-        # Create nodes for all vectors
+    # Create nodes for all vectors
         nodes = []
         for vector_id, vector in self._vectors.items():
             node = KDNode(
@@ -311,7 +300,7 @@ class KDTreeIndex(BaseVectorIndex):
             )
             nodes.append(node)
 
-        # Build balanced tree
+    # Build balanced tree
         self.root = self._build_balanced_tree(nodes, 0)
 
     async def _rebuild_tree(self) -> None:
@@ -323,18 +312,18 @@ class KDTreeIndex(BaseVectorIndex):
         if not nodes:
             return None
 
-        # Select axis based on depth
+    # Select axis based on depth
         axis = depth % (self.dimension or 1)
 
-        # Sort nodes by the current axis
+    # Sort nodes by the current axis
         nodes.sort(key=lambda x: x.vector[axis])
 
-        # Select median as root
+    # Select median as root
         median_idx = len(nodes) // 2
         median_node = nodes[median_idx]
         median_node.axis = axis
 
-        # Recursively build subtrees
+    # Recursively build subtrees
         median_node.left = self._build_balanced_tree(nodes[:median_idx], depth + 1)
         median_node.right = self._build_balanced_tree(
             nodes[median_idx + 1 :], depth + 1

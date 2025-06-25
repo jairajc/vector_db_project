@@ -222,18 +222,18 @@ def create_exception_from_response(
         message = f"HTTP {status_code} error"
         details = {"raw_response": response_text}
 
-    # Add request context
+# Add request context
     if request_context:
         details.update(request_context)
 
-    # Handle specific 404 cases
+# Handle specific 404 cases
     if status_code == 404:
         if request_context:
             path = request_context.get("path", "")
             if "/libraries/" in path:
                 if "/documents/" in path:
                     if "/chunks/" in path:
-                        # Extract chunk and library IDs from path
+                    # Extract chunk and library IDs from path
                         parts = path.split("/")
                         try:
                             lib_idx = parts.index("libraries") + 1
@@ -248,7 +248,7 @@ def create_exception_from_response(
                         except (ValueError, IndexError):
                             pass
                     else:
-                        # Document not found
+                    # Document not found
                         parts = path.split("/")
                         try:
                             lib_idx = parts.index("libraries") + 1
@@ -265,7 +265,7 @@ def create_exception_from_response(
                         except (ValueError, IndexError):
                             pass
                 else:
-                    # Library not found
+                # Library not found
                     parts = path.split("/")
                     try:
                         lib_idx = parts.index("libraries") + 1
@@ -274,6 +274,6 @@ def create_exception_from_response(
                     except (ValueError, IndexError):
                         pass
 
-    # Use status code mapping
+# Use status code mapping
     exception_class = STATUS_CODE_EXCEPTIONS.get(status_code, VectorDBError)
     return exception_class(message, details, status_code, response_text)

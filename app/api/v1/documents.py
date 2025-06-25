@@ -99,7 +99,7 @@ async def get_document(
     try:
         document = await service.get_document(document_id)
 
-        # Verify document belongs to the specified library
+# Verify document belongs to the specified library
         if document.library_id != library_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -131,7 +131,7 @@ async def update_document(
 ):
     """Update a document"""
     try:
-        # First verify the document exists and belongs to the library
+# First verify the document exists and belongs to the library
         existing_document = await service.get_document(document_id)
         if existing_document.library_id != library_id:
             raise HTTPException(
@@ -167,7 +167,6 @@ async def delete_document(
 ):
     """Delete a document and all its chunks"""
     try:
-        # First verify the document exists and belongs to the library
         existing_document = await service.get_document(document_id)
         if existing_document.library_id != library_id:
             raise HTTPException(
@@ -190,7 +189,6 @@ async def get_document_chunks(
 ):
     """Get all chunks belonging to a document"""
     try:
-        # First verify the document exists and belongs to the library
         existing_document = await service.get_document(document_id)
         if existing_document.library_id != library_id:
             raise HTTPException(

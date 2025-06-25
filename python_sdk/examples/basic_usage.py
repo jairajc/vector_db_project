@@ -27,17 +27,17 @@ def basic_sync_example():
     """Basic synchronous client usage"""
     print("=== Basic Sync Example ===")
 
-    # Initialize client
+# Initialize client
     with VectorDBClient("http://localhost:8000") as client:
 
-        # Check if API is available
+    # Check if API is available
         if not client.ping():
             print("VectorDB API is not available. Please start the server first.")
             return
 
         print("✓ Connected to VectorDB API")
 
-        # Create a library with Linear index (good for small datasets)
+    # Create a library with Linear index (good for small datasets)
         library = client.create_library_simple(
             name="Basic Example Library",
             description="Demonstrating basic VectorDB operations",
@@ -46,7 +46,7 @@ def basic_sync_example():
         )
         print(f"✓ Created library: {library.name} (ID: {library.id})")
 
-        # Add some sample text chunks
+    # Add some sample text chunks
         sample_texts = [
             {
                 "text": "Python is a high-level programming language known for its simplicity and readability.",
@@ -90,7 +90,7 @@ def basic_sync_example():
             },
         ]
 
-        # Add chunks to the library
+    # Add chunks to the library
         chunk_ids = []
         for i, sample in enumerate(sample_texts):
             chunk = client.add_text_chunk(
@@ -99,7 +99,7 @@ def basic_sync_example():
             chunk_ids.append(chunk.id)
             print(f"✓ Added chunk {i+1}: {sample['text'][:50]}...")
 
-        # Perform basic search
+    # Perform basic search
         print("\n--- Basic Search ---")
         results = client.search_text(
             library_id=library.id, query="programming language", limit=3
@@ -111,7 +111,7 @@ def basic_sync_example():
             print(f"   Category: {result['metadata'].get('category', 'N/A')}")
             print()
 
-        # Search with metadata filtering
+    # Search with metadata filtering
         print("--- Search with Metadata Filter ---")
         filtered_results = client.filter_by_metadata(
             library_id=library.id,
@@ -128,14 +128,14 @@ def basic_sync_example():
                 f"- {result.chunk.text[:60]}... (Score: {result.similarity_score:.3f})"
             )
 
-        # Get library statistics
+    # Get library statistics
         stats = client.get_library_statistics(library.id)
         print(f"\n--- Library Statistics ---")
         print(f"Total chunks: {stats['chunk_count']}")
         print(f"Index type: {stats['index_type']}")
         print(f"Similarity metric: {stats['similarity_metric']}")
 
-        # Cleanup
+    # Cleanup
         client.delete_library(library.id)
         print(f"✓ Cleaned up library: {library.id}")
 
@@ -146,14 +146,14 @@ async def advanced_async_example():
 
     async with AsyncVectorDBClient("http://localhost:8000") as client:
 
-        # Wait for API to be ready
+    # Wait for API to be ready
         if not await client.wait_for_ready(timeout=10.0):
             print("VectorDB API is not ready. Please check the server.")
             return
 
         print("✓ Connected to VectorDB API (async)")
 
-        # Create a library with LSH index
+    # Create a library with LSH index
         library_data = LibraryCreate(
             name="Advanced Example Library",
             description="Demonstrating advanced VectorDB features",
@@ -167,7 +167,7 @@ async def advanced_async_example():
         library = await client.create_library(library_data)
         print(f"✓ Created LSH library: {library.name} (ID: {library.id})")
 
-        # Create sample data with timestamps
+    # Create sample data with timestamps
         base_time = datetime.now()
         sample_data = []
 
@@ -194,17 +194,17 @@ async def advanced_async_example():
                 )
             )
 
-        # Batch insert chunks
+    # Batch insert chunks
         print("Adding chunks in batches...")
         created_chunks = await client.create_chunks_batch(
             library_id=library.id, chunks=sample_data, batch_size=5
         )
         print(f"✓ Added {len(created_chunks)} chunks in batches")
 
-        # Complex metadata filtering examples
+    # Complex metadata filtering examples
         print("\n--- Complex Metadata Filtering ---")
 
-        # 1. Date range filter - papers from last 10 days
+    # 1. Date range filter - papers from last 10 days
         date_filter = MetadataFilter(
             field="created_at",
             operator="date_range",
@@ -214,15 +214,15 @@ async def advanced_async_example():
             },
         )
 
-        # 2. Category filter - only research papers
+    # 2. Category filter - only research papers
         category_filter = MetadataFilter(
             field="category", operator="eq", value="research"
         )
 
-        # 3. Citations filter - highly cited papers
+    # 3. Citations filter - highly cited papers
         citations_filter = MetadataFilter(field="citations", operator="gte", value=100)
 
-        # Search with combined filters
+    # Search with combined filters
         response = await client.search(
             library_id=library.id,
             query="artificial intelligence research",
@@ -240,7 +240,7 @@ async def advanced_async_example():
             print(f"  Similarity: {result.similarity_score:.3f}")
             print()
 
-        # 4. Array contains filter - papers with specific keywords
+    # 4. Array contains filter - papers with specific keywords
         keyword_filter = MetadataFilter(
             field="keywords", operator="array_contains", value="ai"
         )
@@ -255,7 +255,7 @@ async def advanced_async_example():
 
         print(f"Papers containing 'ai' keyword: {len(response.results)}")
 
-        # 5. Text search in metadata
+    # 5. Text search in metadata
         author_filter = MetadataFilter(
             field="author", operator="contains", value="Author 1", case_sensitive=False
         )
@@ -269,10 +269,10 @@ async def advanced_async_example():
 
         print(f"Papers by 'Author 1': {len(response.results)}")
 
-        # Multi-library search
+    # Multi-library search
         print("\n--- Multi-Library Search ---")
 
-        # Create another library for comparison
+    # Create another library for comparison
         library2_data = LibraryCreate(
             name="Comparison Library",
             description="Second library for multi-search demo",
@@ -282,7 +282,7 @@ async def advanced_async_example():
 
         library2 = await client.create_library(library2_data)
 
-        # Add a few chunks to the second library
+    # Add a few chunks to the second library
         await client.create_chunk(
             library2.id,
             ChunkCreate(
@@ -299,7 +299,7 @@ async def advanced_async_example():
             ),
         )
 
-        # Search across multiple libraries
+    # Search across multiple libraries
         multi_results = await client.search_multiple_libraries(
             library_ids=[library.id, library2.id],
             query="deep learning neural networks",
@@ -318,7 +318,7 @@ async def advanced_async_example():
                 )
             print()
 
-        # Stream search results
+    # Stream search results
         print("--- Streaming Search Results ---")
         queries = [
             "artificial intelligence",
@@ -335,7 +335,7 @@ async def advanced_async_example():
             else:
                 print(f"Query: '{query}' -> {len(result.results)} results")
 
-        # Cleanup
+    # Cleanup
         await client.delete_library(library.id)
         await client.delete_library(library2.id)
         print("✓ Cleaned up all libraries")
@@ -350,7 +350,7 @@ def lsh_performance_example():
             print("VectorDB API is not available.")
             return
 
-        # Create LSH library with custom parameters
+    # Create LSH library with custom parameters
         lsh_library = client.create_library(
             LibraryCreate(
                 name="LSH Performance Test",
@@ -371,7 +371,7 @@ def lsh_performance_example():
         print(f"  Hash functions: 10")
         print(f"  Hash width: 0.8")
 
-        # Add more substantial content for LSH testing
+    # Add more substantial content for LSH testing
         documents = [
             "Artificial intelligence and machine learning are revolutionizing technology",
             "Deep neural networks process complex patterns in data",
@@ -385,7 +385,7 @@ def lsh_performance_example():
             "Hyperparameter tuning optimizes model configuration for best results",
         ]
 
-        # Add documents
+    # Add documents
         for i, doc in enumerate(documents):
             client.add_text_chunk(
                 library_id=lsh_library.id,
@@ -395,7 +395,7 @@ def lsh_performance_example():
 
         print(f"✓ Added {len(documents)} chunks to LSH index")
 
-        # Test search performance
+    # Test search performance
         import time
 
         search_queries = [
@@ -420,7 +420,7 @@ def lsh_performance_example():
                 print(f"  Best score: {results[0]['similarity']:.3f}")
             print()
 
-        # Cleanup
+    # Cleanup
         client.delete_library(lsh_library.id)
         print("✓ Cleaned up LSH library")
 
@@ -432,13 +432,13 @@ def error_handling_example():
     client = VectorDBClient("http://localhost:8000")
 
     try:
-        # Try to get a non-existent library
+    # Try to get a non-existent library
         client.get_library("non-existent-id")
     except Exception as e:
         print(f"✓ Handled library not found: {type(e).__name__}")
 
     try:
-        # Create library with invalid parameters
+    # Create library with invalid parameters
         invalid_library = LibraryCreate(
             name="",  # Empty name should fail validation
             index_type="invalid_type",  # Invalid index type
@@ -448,7 +448,7 @@ def error_handling_example():
     except Exception as e:
         print(f"✓ Handled validation error: {type(e).__name__}")
 
-    # Test connection timeout handling
+# Test connection timeout handling
     try:
         slow_client = VectorDBClient(
             "http://localhost:8000", timeout=0.001  # Very short timeout

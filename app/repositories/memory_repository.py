@@ -30,11 +30,11 @@ class MemoryRepository(BaseRepository[T]):
         resource_id = self._get_resource_id("create", entity_id)
 
         async with await lock_manager.write_lock(resource_id):
-            # Set the ID on the entity
+        # Set the ID on the entity
             if hasattr(entity, "id"):
                 setattr(entity, "id", entity_id)
 
-            # Set timestamps if applicable
+        # Set timestamps if applicable
             now = datetime.utcnow()
             if hasattr(entity, "created_at"):
                 setattr(entity, "created_at", now)
@@ -60,12 +60,12 @@ class MemoryRepository(BaseRepository[T]):
             if not entity:
                 return None
 
-            # Update fields
+        # Update fields
             for field, value in updates.items():
                 if hasattr(entity, field):
                     setattr(entity, field, value)
 
-            # Update timestamp
+        # Update timestamp
             if hasattr(entity, "updated_at"):
                 setattr(entity, "updated_at", datetime.utcnow())
 

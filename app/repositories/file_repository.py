@@ -21,11 +21,11 @@ class FileRepository(BaseRepository[T]):
         self._data_dir = Path(data_dir)
         self._data_dir.mkdir(exist_ok=True)
 
-        # Create subdirectory for this entity type
+    # Create subdirectory for this entity type
         self._entity_dir = self._data_dir / entity_type.__name__.lower()
         self._entity_dir.mkdir(exist_ok=True)
 
-        # Index file for quick lookups
+    # Index file for quick lookups
         self._index_file = self._entity_dir / "index.json"
         self._index: Dict[str, str] = self._load_index()
 
@@ -60,7 +60,7 @@ class FileRepository(BaseRepository[T]):
         else:
             raise ValueError(f"Cannot serialize entity of type {type(entity)}")
 
-        # Recursively convert datetime objects to ISO strings
+    # Recursively convert datetime objects to ISO strings
         return self._convert_datetimes_to_strings(data)
 
     def _convert_datetimes_to_strings(self, data: Any) -> Any:
@@ -107,25 +107,25 @@ class FileRepository(BaseRepository[T]):
     def _looks_like_datetime(self, value: str) -> bool:
         if not isinstance(value, str) or len(value) < 10:
             return False
-        # Check for ISO datetime format
+    # Check for ISO datetime format
         return "T" in value or ("-" in value and ":" in value)
 
     async def create(self, entity: T) -> T:
         """Create a new entity"""
         entity_id = str(uuid.uuid4())
 
-        # Set the ID on the entity
+    # Set the ID on the entity
         if hasattr(entity, "id"):
             setattr(entity, "id", entity_id)
 
-        # Set timestamps if applicable
+    # Set timestamps if applicable
         now = datetime.utcnow()
         if hasattr(entity, "created_at"):
             setattr(entity, "created_at", now)
         if hasattr(entity, "updated_at"):
             setattr(entity, "updated_at", now)
 
-        # Save to file
+    # Save to file
         entity_file = self._get_entity_file(entity_id)
         entity_data = self._serialize_entity(entity)
 
@@ -133,7 +133,7 @@ class FileRepository(BaseRepository[T]):
             with open(entity_file, "w") as f:
                 json.dump(entity_data, f, indent=2)
 
-            # Update index
+        # Update index
             self._index[entity_id] = entity_file.name
             self._save_index()
 
@@ -148,7 +148,7 @@ class FileRepository(BaseRepository[T]):
 
         entity_file = self._get_entity_file(entity_id)
         if not entity_file.exists():
-            # Remove from index if file doesn't exist
+        # Remove from index if file doesn't exist
             del self._index[entity_id]
             self._save_index()
             return None
@@ -166,16 +166,16 @@ class FileRepository(BaseRepository[T]):
         if not entity:
             return None
 
-        # Update fields
+    # Update fields
         for field, value in updates.items():
             if hasattr(entity, field):
                 setattr(entity, field, value)
 
-        # Update timestamp
+    # Update timestamp
         if hasattr(entity, "updated_at"):
             setattr(entity, "updated_at", datetime.utcnow())
 
-        # Save to file
+    # Save to file
         entity_file = self._get_entity_file(entity_id)
         entity_data = self._serialize_entity(entity)
 
@@ -197,7 +197,7 @@ class FileRepository(BaseRepository[T]):
             if entity_file.exists():
                 entity_file.unlink()
 
-            # Remove from index
+        # Remove from index
             del self._index[entity_id]
             self._save_index()
             return True
@@ -271,7 +271,7 @@ class FileChunkRepository(FileRepository[Chunk]):
 
     def __init__(self, data_dir: str = "data"):
         super().__init__(Chunk, data_dir)
-        # Secondary indexes for efficient queries
+    # Secondary indexes for efficient queries
         self._library_index_file = self._entity_dir / "library_index.json"
         self._document_index_file = self._entity_dir / "document_index.json"
         self._library_index: Dict[str, List[str]] = self._load_secondary_index(
@@ -305,7 +305,7 @@ class FileChunkRepository(FileRepository[Chunk]):
         """Create a new chunk with secondary index updates"""
         result = await super().create(entity)
 
-        # Update secondary indexes
+    # Update secondary indexes
         library_id = entity.library_id
         document_id = entity.document_id
         chunk_id = entity.id
@@ -331,7 +331,7 @@ class FileChunkRepository(FileRepository[Chunk]):
         result = await super().delete(entity_id)
 
         if result:
-            # Update secondary indexes
+        # Update secondary indexes
             library_id = chunk.library_id
             document_id = chunk.document_id
 
@@ -444,7 +444,7 @@ class FileDocumentRepository(FileRepository[Document]):
         """Create a new document with secondary index updates"""
         result = await super().create(entity)
 
-        # Update secondary index
+    # Update secondary index
         library_id = entity.library_id
         document_id = entity.id
 
@@ -464,7 +464,7 @@ class FileDocumentRepository(FileRepository[Document]):
         result = await super().delete(entity_id)
 
         if result:
-            # Update secondary index
+    
             library_id = document.library_id
 
             if library_id in self._library_index:

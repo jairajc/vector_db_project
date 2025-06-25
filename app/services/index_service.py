@@ -31,15 +31,15 @@ class IndexService:
             elif index_type == IndexType.KD_TREE:
                 index = KDTreeIndex(similarity_metric)
             elif index_type == IndexType.LSH:
-                # Extract LSH-specific parameters from kwargs
+            # Extract LSH-specific parameters from kwargs
                 lsh_params = None
                 if "lsh_config" in kwargs and kwargs["lsh_config"] is not None:
                     config = kwargs["lsh_config"]
-                    # Use the new conversion method that handles both old and new field names
+                # Use the new conversion method that handles both old and new field names
                     lsh_params = LSHParams.from_config(config)
                 index = LSHIndex(similarity_metric, lsh_params)
             else:
-                # Default to linear index for unsupported types
+            # Default to linear index for unsupported types
                 index = LinearIndex(similarity_metric)
 
             self._indexes[library_id] = index
@@ -118,59 +118,59 @@ class IndexService:
     ) -> List[SearchResult]:
         """Search for similar vectors in a library"""
         try:
-            # Check if index exists
+        # Check if index exists
             if library_id not in self._indexes:
                 raise LibraryNotFound(library_id)
 
-            # Generate query embedding
+        # Generate query embedding
             query_embedding = await embedding_service.generate_query_embedding(
                 query_text
             )
 
-            # Get index and search
+        # Get index and search
             index = self._indexes[library_id]
             raw_results = await index.search(query_embedding, k)
 
-            # Return empty if no results
+        # Return empty if no results
             if not raw_results:
                 return []
 
             results = []
 
             for i, (vector_id, similarity_score) in enumerate(raw_results):
-                # Skip if similarity threshold not met
+            # Skip if similarity threshold not met
                 if (
                     similarity_threshold is not None
                     and similarity_score < similarity_threshold
                 ):
                     continue
 
-                # Get vector metadata
+            # Get vector metadata
                 if hasattr(index, "_metadata") and vector_id in index._metadata:
                     metadata = index._metadata[vector_id]
                 else:
                     continue  # Skip if no metadata available
 
-                # Skip if metadata filters don't match
+            # Skip if metadata filters don't match
                 if not self._metadata_filters_match(
                     metadata, metadata_filters, filter_mode
                 ):
                     continue
 
-                # Get embedding vector for response
+            # Get embedding vector for response
                 vector_embedding = []
                 if hasattr(index, "_vectors") and vector_id in index._vectors:
                     vector_embedding = index._vectors[vector_id].tolist()
 
-                # Create chunk metadata with proper datetime handling
+            # Create chunk metadata with proper datetime handling
                 from datetime import datetime, timezone
 
-                # Handle datetime fields with proper defaults
+            # Handle datetime fields with proper defaults
                 created_at = metadata.get("created_at")
                 if created_at is None:
                     created_at = datetime.now(timezone.utc)
                 elif isinstance(created_at, str):
-                    # Parse ISO format datetime string
+                # Parse ISO format datetime string
                     try:
                         created_at = datetime.fromisoformat(
                             created_at.replace("Z", "+00:00")
@@ -182,7 +182,7 @@ class IndexService:
                 if updated_at is None:
                     updated_at = datetime.now(timezone.utc)
                 elif isinstance(updated_at, str):
-                    # Parse ISO format datetime string
+             
                     try:
                         updated_at = datetime.fromisoformat(
                             updated_at.replace("Z", "+00:00")
@@ -199,7 +199,7 @@ class IndexService:
                     custom_fields=metadata.get("custom_fields", {}),
                 )
 
-                # Create chunk response
+            # Create chunk response
                 chunk_response = ChunkResponse(
                     id=vector_id,
                     text=metadata.get("text", ""),
@@ -226,14 +226,14 @@ class IndexService:
         self, metadata: Dict[str, Any], filters: Optional[List[Any]], filter_mode: str
     ) -> bool:
         """Check if metadata matches the provided filters using advanced metadata filter engine"""
-        # Return if no filters
+    # Return if no filters
         if not filters:
             return True
 
-        # Convert filter objects to MetadataFilter instances
+    # Convert filter objects to MetadataFilter instances
         converted_filters = []
         for filter_obj in filters:
-            # Handle both dict and object formats
+        # Handle both dict and object formats
             if hasattr(filter_obj, "field"):
                 field = filter_obj.field
                 operator = filter_obj.operator
@@ -243,17 +243,17 @@ class IndexService:
                 operator = filter_obj.get("operator")
                 value = filter_obj.get("value")
 
-            # Skip if invalid filter
+        # Skip if invalid filter
             if not field or not operator:
                 continue
 
-            # Create MetadataFilter instance
+        # Create MetadataFilter instance
             metadata_filter = MetadataFilter(
                 field=field, operator=operator, value=value
             )
             converted_filters.append(metadata_filter)
 
-        # Use advanced metadata filter engine
+    # Use advanced metadata filter engine
         return self._metadata_filter_engine.apply_filters(
             metadata=metadata, filters=converted_filters, mode=filter_mode
         )

@@ -67,12 +67,12 @@ class VectorDBClient:
             verify_ssl=verify_ssl,
         )
 
-        # Event loop management for sync client
+    # Event loop management for sync client
         self._loop = None
         self._loop_thread = None
         self._setup_event_loop()
 
-        # Register cleanup on exit
+    # Register cleanup on exit
         atexit.register(self.close)
 
     def _setup_event_loop(self):
@@ -86,7 +86,7 @@ class VectorDBClient:
         self._loop_thread = threading.Thread(target=run_loop, daemon=True)
         self._loop_thread.start()
 
-        # Wait for loop to be ready
+    # Wait for loop to be ready
         while self._loop is None:
             threading.Event().wait(0.01)
 
@@ -101,13 +101,13 @@ class VectorDBClient:
     def close(self):
         """Close the client and cleanup resources"""
         if self._loop and not self._loop.is_closed():
-            # Close async client
+        # Close async client
             self._run_async(self._async_client.close())
 
-            # Stop event loop
+        # Stop event loop
             self._loop.call_soon_threadsafe(self._loop.stop)
 
-            # Wait for thread to finish
+        # Wait for thread to finish
             if self._loop_thread and self._loop_thread.is_alive():
                 self._loop_thread.join(timeout=5.0)
 
@@ -119,7 +119,7 @@ class VectorDBClient:
         """Context manager exit"""
         self.close()
 
-    # Health and Admin
+# Health and Admin
 
     def health_check(self) -> HealthCheck:
         """Get API health status"""
@@ -129,7 +129,7 @@ class VectorDBClient:
         """Get storage statistics"""
         return self._run_async(self._async_client.get_storage_stats())
 
-    # Library Operations
+# Library Operations
 
     def create_library(self, library: LibraryCreate) -> Library:
         """Create a new library"""
@@ -157,7 +157,7 @@ class VectorDBClient:
         """Rebuild library index"""
         return self._run_async(self._async_client.rebuild_library_index(library_id))
 
-    # Document Operations
+# Document Operations
 
     def create_document(self, library_id: str, document: DocumentCreate) -> Document:
         """Create a new document in a library"""
@@ -193,7 +193,7 @@ class VectorDBClient:
             self._async_client.delete_document(library_id, document_id)
         )
 
-    # Chunk Operations
+# Chunk Operations
 
     def create_chunk(self, library_id: str, chunk: ChunkCreate) -> Chunk:
         """Create a new chunk in a library"""
@@ -225,7 +225,7 @@ class VectorDBClient:
         """Delete chunk"""
         return self._run_async(self._async_client.delete_chunk(library_id, chunk_id))
 
-    # Search Operations
+# Search Operations
 
     def search(
         self,
@@ -262,7 +262,7 @@ class VectorDBClient:
             self._async_client.search_simple(library_id, query, k, threshold)
         )
 
-    # Batch Operations
+# Batch Operations
 
     def create_chunks_batch(
         self, library_id: str, chunks: List[ChunkCreate], batch_size: int = 50
@@ -282,7 +282,7 @@ class VectorDBClient:
             )
         )
 
-    # Utility Methods
+# Utility Methods
 
     def ping(self) -> bool:
         """Check if the API is reachable"""
@@ -306,7 +306,7 @@ class VectorDBClient:
         """Get detailed library statistics"""
         return self._run_async(self._async_client.get_library_statistics(library_id))
 
-    # Convenience Methods
+# Convenience Methods
 
     def create_library_simple(
         self,

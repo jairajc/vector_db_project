@@ -76,7 +76,7 @@ class AsyncVectorDBClient:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 
-        # Session configuration
+    # Session configuration
         connector = aiohttp.TCPConnector(
             limit=max_connections,
             limit_per_host=max_connections // 4,
@@ -86,7 +86,7 @@ class AsyncVectorDBClient:
 
         timeout_config = aiohttp.ClientTimeout(total=timeout)
 
-        # Default headers
+    # Default headers
         headers = {
             "Content-Type": "application/json",
             "User-Agent": "VectorDB-Python-SDK/1.0.0",
@@ -114,7 +114,7 @@ class AsyncVectorDBClient:
         if self._session and not self._session.closed:
             await self._session.close()
 
-    # Core HTTP Methods
+# Core HTTP Methods
 
     async def _request(
         self,
@@ -128,7 +128,7 @@ class AsyncVectorDBClient:
 
         url = urljoin(self.base_url, path.lstrip("/"))
 
-        # Clean params (remove None values)
+    # Clean params (remove None values)
         if params:
             params = {k: v for k, v in params.items() if v is not None}
 
@@ -144,7 +144,7 @@ class AsyncVectorDBClient:
 
                     response_text = await response.text()
 
-                    # Handle successful responses
+                # Handle successful responses
                     if 200 <= response.status < 300:
                         if response_text:
                             try:
@@ -153,7 +153,7 @@ class AsyncVectorDBClient:
                                 return {"raw_response": response_text}
                         return {}
 
-                    # Handle rate limiting with retry
+                # Handle rate limiting with retry
                     if response.status == 429 and attempt < self.max_retries:
                         retry_after = response.headers.get("Retry-After")
                         delay = (
@@ -165,7 +165,7 @@ class AsyncVectorDBClient:
                         await asyncio.sleep(delay)
                         continue
 
-                    # Handle server errors with retry
+                # Handle server errors with retry
                     if response.status >= 500 and attempt < self.max_retries:
                         delay = self.retry_delay * (2**attempt)
                         logger.warning(
@@ -174,7 +174,7 @@ class AsyncVectorDBClient:
                         await asyncio.sleep(delay)
                         continue
 
-                    # Create exception for non-retryable errors
+                # Create exception for non-retryable errors
                     raise create_exception_from_response(
                         response.status, response_text, request_context
                     )
@@ -201,7 +201,7 @@ class AsyncVectorDBClient:
                 last_exception = VectorDBError(f"Unexpected error: {str(e)}")
                 break  # Don't retry unexpected errors
 
-        # If we get here, all retries failed
+    # If we get here, all retries failed
         raise last_exception or VectorDBError("Request failed after all retries")
 
     async def _get(
@@ -226,7 +226,7 @@ class AsyncVectorDBClient:
         """Make DELETE request"""
         return await self._request("DELETE", path)
 
-    # Health and Admin
+# Health and Admin
 
     async def health_check(self) -> HealthCheck:
         """Get API health status"""
@@ -238,7 +238,7 @@ class AsyncVectorDBClient:
         response = await self._get("/admin/stats")
         return StorageStats(**response)
 
-    # Library Operations
+# Library Operations
 
     async def create_library(self, library: LibraryCreate) -> Library:
         """Create a new library"""
@@ -277,7 +277,7 @@ class AsyncVectorDBClient:
         response = await self._post(f"/api/v1/libraries/{library_id}/rebuild")
         return response
 
-    # Document Operations
+# Document Operations
 
     async def create_document(
         self, library_id: str, document: DocumentCreate
@@ -326,7 +326,7 @@ class AsyncVectorDBClient:
         """Delete document"""
         await self._delete(f"/api/v1/libraries/{library_id}/documents/{document_id}")
 
-    # Chunk Operations
+# Chunk Operations
 
     async def create_chunk(self, library_id: str, chunk: ChunkCreate) -> Chunk:
         """Create a new chunk in a library"""
@@ -371,7 +371,7 @@ class AsyncVectorDBClient:
         """Delete chunk"""
         await self._delete(f"/api/v1/libraries/{library_id}/chunks/{chunk_id}")
 
-    # Search Operations
+# Search Operations
 
     async def search(
         self,
@@ -416,7 +416,7 @@ class AsyncVectorDBClient:
         )
         return SearchResponse(**response)
 
-    # Batch Operations
+# Batch Operations
 
     async def create_chunks_batch(
         self, library_id: str, chunks: List[ChunkCreate], batch_size: int = 50
@@ -458,7 +458,7 @@ class AsyncVectorDBClient:
 
         return search_results
 
-    # Utility Methods
+# Utility Methods
 
     async def ping(self) -> bool:
         """Check if the API is reachable"""
@@ -487,7 +487,7 @@ class AsyncVectorDBClient:
         """Helper to create metadata filter"""
         return MetadataFilter(field=field, operator=operator, value=value)
 
-    # Advanced Features
+# Advanced Features
 
     async def stream_search_results(
         self, library_id: str, queries: List[str], k: int = 10, **kwargs
@@ -503,10 +503,10 @@ class AsyncVectorDBClient:
     async def get_library_statistics(self, library_id: str) -> Dict[str, Any]:
         """Get detailed library statistics"""
         try:
-            # Get basic library info
+        # Get basic library info
             library = await self.get_library(library_id)
 
-            # Get document and chunk counts via list operations
+        # Get document and chunk counts via list operations
             documents = await self.list_documents(library_id, limit=1)
             chunks = await self.list_chunks(library_id, limit=1)
 

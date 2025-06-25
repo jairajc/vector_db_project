@@ -6,17 +6,6 @@ from app.utils.concurrency import lock_manager
 
 
 class LinearIndex(BaseVectorIndex):
-    """
-    Linear search vector index using brute force comparison with async concurrency control
-
-    Time Complexity:
-    - Build: O(1) per vector insertion
-    - Search: O(n) where n is the number of vectors
-    - Insert: O(1)
-    - Delete: O(1)
-
-    Space Complexity: O(n) where n is the number of vectors
-    """
 
     def __init__(self, similarity_metric: SimilarityMetric):
         super().__init__(similarity_metric)
@@ -102,16 +91,16 @@ class LinearIndex(BaseVectorIndex):
                 if norm > 0:
                     query_array = query_array / norm
 
-            # Calculate similarities for all vectors
+        # Calculate similarities for all vectors
             similarities = []
             for vector_id, vector in self._vectors.items():
                 similarity = self._calculate_similarity(query_array, vector)
                 similarities.append((vector_id, similarity))
 
-            # Sort by similarity (descending order)
+        # Sort by similarity (descending order)
             similarities.sort(key=lambda x: x[1], reverse=True)
 
-            # Return top k results
+        # Return top k results
             return similarities[:k]
 
     async def get_vector_count(self) -> int:
@@ -158,7 +147,7 @@ class LinearIndex(BaseVectorIndex):
             if norm > 0:
                 query_vector = query_vector / norm
 
-        # Calculate similarities for all vectors
+    # Calculate similarities for all vectors
         similarities = []
         for vector_id, vector in self._vectors.items():
             similarity = self._calculate_similarity(query_vector, vector)
@@ -166,5 +155,5 @@ class LinearIndex(BaseVectorIndex):
 
         similarities.sort(key=lambda x: x[1], reverse=True)
 
-        # Return top k results
+    # Return top k results
         return similarities[:k]

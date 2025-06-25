@@ -33,7 +33,7 @@ class BaseVectorIndex(ABC):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Update a vector in the index (async interface)"""
-        # Default implementation calls sync version for backward compatibility
+    # Default implementation calls sync version for backward compatibility
         vector_array = np.array(vector, dtype=np.float32)
         self.update_vector_sync(vector_id, vector_array, metadata or {})
         return True
@@ -45,20 +45,20 @@ class BaseVectorIndex(ABC):
 
         query_array = np.array(query_vector, dtype=np.float32)
         results = self.search_knn(query_array, k)
-        # Convert from (id, score, metadata) to (id, score)
+    # Convert from (id, score, metadata) to (id, score)
         return [(result[0], result[1]) for result in results]
 
     async def get_vector_count(self) -> int:
         """Get the number of vectors in the index (async interface)"""
-        # Default implementation
+    # Default implementation
         return 0
 
     async def clear(self) -> None:
         """Clear all vectors from the index (async interface)."""
-        # Default implementation - subclasses should override
+    # Default implementation - subclasses should override
         pass
 
-    # Legacy sync interface (for backward compatibility)
+# Legacy sync interface (for backward compatibility)
     def add_vector_sync(
         self, vector_id: str, vector: np.ndarray, metadata: Dict[str, Any]
     ):

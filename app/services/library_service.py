@@ -12,7 +12,7 @@ class LibraryService:
     """Services for library management operations"""
 
     def __init__(self, library_repo, chunk_repo, document_repo, index_service):
-        # Use dependency injection - no fallback to factory
+    # Use dependency injection - no fallback to factory
         self.library_repo = library_repo
         self.chunk_repo = chunk_repo
         self.document_repo = document_repo
@@ -38,7 +38,7 @@ class LibraryService:
         """Create a new library"""
         library = await self.library_repo.create_from_request(library_create)
 
-        # Initialize empty index for the library with LSH configuration if provided
+    # Initialize empty index for the library with LSH configuration if provided
         index_kwargs = {}
         if library.index_type == IndexType.LSH and library.lsh_config:
             index_kwargs["lsh_config"] = library.lsh_config
@@ -53,7 +53,7 @@ class LibraryService:
         """Get a library by ID"""
         library = await self._get_library_or_raise(library_id)
 
-        # Update stats
+    # Update stats
         await self._update_library_stats(library)
         return library
 
@@ -61,7 +61,7 @@ class LibraryService:
         """List all libraries with pagination"""
         libraries = await self.library_repo.list_all(skip=skip, limit=limit)
 
-        # Update stats for each library
+    # Update stats for each library
         for library in libraries:
             await self._update_library_stats(library)
 
@@ -81,7 +81,7 @@ class LibraryService:
         if not library:
             raise LibraryNotFound(library_id)
 
-        # Check if index rebuild is needed
+    # Check if index rebuild is needed
         needs_index_rebuild = (
             library_update.index_type is not None
             or library_update.similarity_metric is not None
@@ -89,7 +89,7 @@ class LibraryService:
         )
 
         if needs_index_rebuild:
-            # Prepare index kwargs with LSH configuration if needed
+        # Prepare index kwargs with LSH configuration if needed
             index_kwargs = {}
             if library.index_type == IndexType.LSH and library.lsh_config:
                 index_kwargs["lsh_config"] = library.lsh_config
@@ -107,26 +107,26 @@ class LibraryService:
         """Delete a library and all its data"""
         await self._get_library_or_raise(library_id)
 
-        # Delete all chunks and documents in the library
+    # Delete all chunks and documents in the library
         await self.chunk_repo.delete_by_library_id(library_id)
         await self.document_repo.delete_by_library_id(library_id)
 
-        # Delete the index
+    # Delete the index
         await self.index_service.delete_index(library_id)
 
-        # Delete the library
+    # Delete the library
         return await self.library_repo.delete(library_id)
 
     async def rebuild_index(self, library_id: str):
         """Rebuild the vector index for a library"""
         library = await self._get_library_or_raise(library_id)
 
-        # Get all chunks in the library
+    # Get all chunks in the library
         chunks = await self.chunk_repo.get_by_library_id(
             library_id, skip=0, limit=10000
         )
 
-        # Rebuild the index with LSH configuration if needed
+    # Rebuild the index with LSH configuration if needed
         index_kwargs = {}
         if library.index_type == IndexType.LSH and library.lsh_config:
             index_kwargs["lsh_config"] = library.lsh_config
@@ -134,8 +134,7 @@ class LibraryService:
         await self.index_service.rebuild_index(
             library_id, library.index_type, library.similarity_metric, **index_kwargs
         )
-
-        # Re add all chunks to the index
+    # Re add all chunks to the index
         for chunk in chunks:
             index_metadata = {
                 "text": chunk.text,
