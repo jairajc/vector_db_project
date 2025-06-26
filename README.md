@@ -1,4 +1,4 @@
-# VectorDB - Production-Ready Vector Database 
+# VectorDB-From-Scratch
 
 A high-performance, scalable vector database with advanced indexing algorithms, metadata filtering, persistence, clustering, and comprehensive Python SDK.
 
